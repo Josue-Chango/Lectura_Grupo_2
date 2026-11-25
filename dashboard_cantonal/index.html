@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Seguridad · Pichincha</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230e7490'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #08101d;
+      --card: #111c2f;
+      --card-2: #15233a;
+      --borde: #22334f;
+      --texto: #e8eef9;
+      --apagado: #8fa3c0;
+      --cian: #22d3ee;
+      --violeta: #a78bfa;
+      --verde: #34d399;
+      --rojo: #fb7185;
+      --radio: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+      color: var(--texto);
+      background:
+        radial-gradient(900px 500px at 12% -10%, rgba(34, 211, 238, .13), transparent 70%),
+        radial-gradient(800px 500px at 92% 0%, rgba(167, 139, 250, .12), transparent 70%),
+        var(--bg);
+    }
+
+    .contenedor { max-width: 1400px; margin: 0 auto; padding: 28px 24px 48px; }
+
+    header { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+
+    .titulo { display: flex; align-items: center; gap: 14px; }
+    .icono {
+      width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(34,211,238,.22), rgba(167,139,250,.22));
+      border: 1px solid rgba(34,211,238,.35); font-size: 24px;
+    }
+    h1 { margin: 0; font-size: clamp(22px, 3vw, 32px); letter-spacing: -.5px; }
+    .subtitulo { margin: 4px 0 0; color: var(--apagado); font-size: 14px; }
+
+    .estado {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border-radius: 999px;
+      background: rgba(52, 211, 153, .1); border: 1px solid rgba(52,211,153,.3);
+      color: var(--verde); font-size: 12px; font-weight: 600;
+    }
+    .estado.error { background: rgba(251,113,133,.1); border-color: rgba(251,113,133,.35); color: var(--rojo); }
+    .punto-estado { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+
+    .filtros {
+      display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding: 16px 18px;
+      background: rgba(17, 28, 47, .85); border: 1px solid var(--borde); border-radius: var(--radio);
+      box-shadow: 0 12px 32px rgba(0,0,0,.18); margin-bottom: 20px;
+    }
+    .campo { display: grid; gap: 6px; min-width: 190px; flex: 1 1 190px; }
+    .campo label { color: var(--apagado); font-size: 11px; text-transform: uppercase; letter-spacing: .9px; font-weight: 700; }
+    select, button {
+      font: inherit; font-size: 14px; color: var(--texto); background: #0d182a;
+      border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; outline: none;
+    }
+    select:focus, button:focus-visible { border-color: var(--cian); box-shadow: 0 0 0 3px rgba(34,211,238,.15); }
+    button { cursor: pointer; transition: transform .15s ease, border-color .15s ease, background .15s ease; }
+    button:hover { transform: translateY(-1px); border-color: var(--cian); }
+    .boton-primario { background: linear-gradient(135deg, #0e7490, #155e75); border-color: #0891b2; font-weight: 600; }
+    .boton-suave { background: transparent; }
+
+    .aviso {
+      display: none; margin-bottom: 18px; padding: 14px 16px; border-radius: 12px;
+      background: rgba(251,113,133,.09); border: 1px solid rgba(251,113,133,.3); color: #fecdd3; font-size: 14px;
+    }
+    .aviso.visible { display: block; }
+    .aviso code { background: rgba(0,0,0,.3); padding: 2px 6px; border-radius: 5px; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 18px; }
+    .kpi {
+      position: relative; overflow: hidden; padding: 18px 20px; border-radius: var(--radio);
+      background: linear-gradient(145deg, var(--card), var(--card-2)); border: 1px solid var(--borde);
+      box-shadow: 0 14px 30px rgba(0,0,0,.16);
+    }
+    .kpi::after { content: ""; position: absolute; width: 120px; height: 120px; right: -50px; top: -60px; border-radius: 50%; background: rgba(34,211,238,.07); }
+    .kpi .etiqueta { color: var(--apagado); font-size: 12px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; }
+    .kpi .valor { margin-top: 10px; font-size: clamp(24px, 2.6vw, 34px); font-weight: 750; letter-spacing: -.8px; }
+    .kpi .detalle { margin-top: 8px; font-size: 12px; color: var(--apagado); min-height: 18px; }
+    .chip { display: inline-block; padding: 3px 8px; border-radius: 999px; font-weight: 700; }
+    .chip.subida { color: var(--rojo); background: rgba(251,113,133,.12); }
+    .chip.bajada { color: var(--verde); background: rgba(52,211,153,.12); }
+
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .panel {
+      background: rgba(17, 28, 47, .92); border: 1px solid var(--borde); border-radius: var(--radio);
+      padding: 18px 20px 20px; box-shadow: 0 14px 30px rgba(0,0,0,.16); min-width: 0;
+    }
+    .panel.ancho { grid-column: 1 / -1; }
+    .panel h2 { margin: 0; font-size: 16px; font-weight: 700; }
+    .panel .nota { margin: 5px 0 0; font-size: 12px; color: var(--apagado); }
+    .panel-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .leyenda { font-size: 12px; color: var(--cian); background: rgba(34,211,238,.09); border: 1px solid rgba(34,211,238,.2); padding: 5px 10px; border-radius: 999px; white-space: nowrap; }
+
+    .grafico-lineas svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .linea-curva { fill: none; stroke: var(--cian); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+    .punto { fill: #08101d; stroke: var(--cian); stroke-width: 2; cursor: crosshair; }
+    .punto:hover { fill: var(--cian); r: 5; }
+    .rejilla { stroke: rgba(143,163,192,.15); stroke-width: 1; }
+    .eje-texto { fill: var(--apagado); font-size: 11px; }
+
+    .barras { display: grid; gap: 11px; margin-top: 4px; }
+    .barra { display: grid; grid-template-columns: minmax(120px, 175px) 1fr 74px; gap: 10px; align-items: center; font-size: 13px; }
+    .barra .nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #d7e2f3; }
+    .barra .pista { display: block; height: 10px; border-radius: 999px; background: rgba(143,163,192,.12); overflow: hidden; }
+    .barra .relleno { display: block; height: 100%; min-width: 4px; border-radius: 999px; background: linear-gradient(90deg, #0e7490, var(--cian)); }
+    .barra .numero { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+
+    .donuta { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+    .donuta svg { width: 190px; height: 190px; flex: 0 0 190px; }
+    .donuta .total { fill: var(--texto); font-size: 22px; font-weight: 750; }
+    .donuta .total-label { fill: var(--apagado); font-size: 10px; letter-spacing: 1px; }
+    .leyenda-lista { display: grid; gap: 8px; flex: 1 1 210px; min-width: 0; }
+    .leyenda-item { display: grid; grid-template-columns: 10px 1fr auto; gap: 9px; align-items: center; font-size: 12px; }
+    .leyenda-item .color { width: 10px; height: 10px; border-radius: 3px; }
+    .leyenda-item .nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #d7e2f3; }
+    .leyenda-item .valor { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+    .mapa { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 11px; table-layout: fixed; }
+    .mapa th { color: var(--apagado); font-weight: 600; font-size: 10px; padding: 3px 2px; text-align: center; word-break: break-word; }
+    .mapa th.canton { text-align: left; width: 132px; font-size: 11px; color: #d7e2f3; }
+    .mapa td {
+      text-align: center; padding: 9px 2px; border-radius: 6px; font-variant-numeric: tabular-nums;
+      font-weight: 700; background: rgba(143,163,192,.06); cursor: default; transition: transform .12s ease;
+    }
+    .mapa td:hover { transform: scale(1.06); outline: 1px solid var(--cian); }
+
+    .ranking { display: grid; gap: 10px; }
+    .rank { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+    .rank .num { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; background: rgba(167,139,250,.14); color: var(--violeta); font-weight: 800; font-size: 11px; }
+    .rank .texto { min-width: 0; }
+    .rank .texto b { display: block; font-size: 12px; }
+    .rank .texto small { display: block; color: var(--apagado); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rank .mini { display: block; height: 5px; margin-top: 6px; border-radius: 999px; background: rgba(143,163,192,.12); overflow: hidden; }
+    .rank .mini i { display: block; height: 100%; min-width: 4px; border-radius: 999px; background: linear-gradient(90deg, #6d28d9, var(--violeta)); }
+    .rank .numero { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .vacio { color: var(--apagado); font-size: 13px; padding: 18px 0; text-align: center; }
+
+    .tooltip {
+      position: fixed; z-index: 99; pointer-events: none; opacity: 0; transition: opacity .1s ease;
+      background: #07101e; border: 1px solid var(--cian); border-radius: 9px; padding: 8px 11px;
+      font-size: 12px; line-height: 1.45; box-shadow: 0 10px 24px rgba(0,0,0,.4); max-width: 280px;
+    }
+    .tooltip b { color: var(--cian); }
+
+    footer { margin-top: 26px; color: var(--apagado); font-size: 12px; text-align: center; line-height: 1.6; }
+
+    @media (max-width: 1000px) {
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid { grid-template-columns: minmax(0, 1fr); }
+      .panel.ancho { grid-column: auto; }
+    }
+    @media (max-width: 620px) {
+      .contenedor { padding: 18px 14px 36px; }
+      .kpis { grid-template-columns: minmax(0, 1fr); }
+      .barra { grid-template-columns: 110px 1fr 62px; }
+      .donuta svg { width: 150px; height: 150px; flex-basis: 150px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor">
+    <header>
+      <div class="titulo">
+        <div class="icono">🛡️</div>
+        <div>
+          <h1>Seguridad en Pichincha</h1>
+          <p class="subtitulo">Dashboard interactivo de delitos · enero 2020 – febrero 2026</p>
+        </div>
+      </div>
+      <div id="estado" class="estado"><span class="punto-estado"></span><span>Conectando con la API :5000…</span></div>
+    </header>
+
+    <div class="filtros">
+      <div class="campo"><label for="anio">Año</label><select id="anio"><option value="">Todos los años</option></select></div>
+      <div class="campo"><label for="canton">Cantón</label><select id="canton"><option value="">Todos los cantones</option></select></div>
+      <div class="campo"><label for="categoria">Categoría</label><select id="categoria"><option value="">Todas las categorías</option></select></div>
+      <button id="limpiar" class="boton-suave" type="button">↺ Limpiar filtros</button>
+      <button id="exportar" class="boton-primario" type="button">↓ Descargar CSV</button>
+    </div>
+
+    <div id="aviso" class="aviso"></div>
+
+    <section class="kpis">
+      <div class="kpi"><div class="etiqueta">Total de casos</div><div class="valor" id="k-total">—</div><div class="detalle" id="k-total-detalle"></div></div>
+      <div class="kpi"><div class="etiqueta">Promedio mensual</div><div class="valor" id="k-promedio">—</div><div class="detalle" id="k-promedio-detalle"></div></div>
+      <div class="kpi"><div class="etiqueta">Cantón con más casos</div><div class="valor" id="k-canton">—</div><div class="detalle" id="k-canton-detalle"></div></div>
+      <div class="kpi"><div class="etiqueta">Categoría más frecuente</div><div class="valor" id="k-categoria">—</div><div class="detalle" id="k-categoria-detalle"></div></div>
+    </section>
+
+    <section class="grid">
+      <div class="panel ancho">
+        <div class="panel-cabecera">
+          <div><h2>Evolución mensual de casos</h2><p class="nota">Serie temporal según los filtros seleccionados</p></div>
+          <div class="leyenda" id="leyenda-linea">Todos los datos</div>
+        </div>
+        <div id="linea" class="grafico-lineas"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-cabecera">
+          <div><h2>Casos por cantón</h2><p class="nota">Ordenado de mayor a menor</p></div>
+        </div>
+        <div id="barras-canton" class="barras"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-cabecera">
+          <div><h2>Distribución por categoría</h2><p class="nota">Participación porcentual del total</p></div>
+        </div>
+        <div id="donuta" class="donuta"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-cabecera">
+          <div><h2>Mapa de calor cantón × categoría</h2><p class="nota">Intensidad de casos (pasa el cursor para ver el valor)</p></div>
+        </div>
+        <div id="mapa"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-cabecera">
+          <div><h2>Top 6 combinaciones</h2><p class="nota">Cantón y categoría con más reportes</p></div>
+        </div>
+        <div id="ranking" class="ranking"></div>
+      </div>
+    </section>
+
+    <footer>
+      Fuente: dataset_seguridad_pichincha_2020_2026_hasta_febrero.csv · Datos mensuales · 2026 corresponde solo a enero y febrero.<br />
+      API Flask + pandas en <strong>http://localhost:5000</strong> · Este HTML también se puede abrir con Live Server en VS Code.
+    </footer>
+  </div>
+
+  <div id="tooltip" class="tooltip"></div>
+
+  <script>
+    const API = location.port === "5000" ? "" : "http://localhost:5000";
+    const fmt = new Intl.NumberFormat("es-EC");
+    const COLORES = ["#22d3ee", "#a78bfa", "#34d399", "#fbbf24", "#fb7185", "#60a5fa", "#f472b6", "#94a3b8"];
+    const CORTO = {
+      "Femicidios": "Femicidios",
+      "Homicidios intencionales": "Homicidios",
+      "Robo a domicilio": "Robo domicilio",
+      "Robo a personas": "Robo personas",
+      "Robo a unidades económicas": "Robo unidades econ.",
+      "Robo de bienes, accesorios y autopartes de vehículos": "Bienes/autopartes",
+      "Robo de carros": "Robo carros",
+      "Robo de motos": "Robo motos"
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const escapar = (txt) => String(txt).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const tooltip = $("tooltip");
+
+    function enlazarTooltips() {
+      document.querySelectorAll("[data-tip]").forEach((el) => {
+        el.addEventListener("mouseenter", (e) => {
+          tooltip.innerHTML = el.dataset.tip;
+          tooltip.style.opacity = "1";
+          moverTooltip(e);
+        });
+        el.addEventListener("mousemove", moverTooltip);
+        el.addEventListener("mouseleave", () => { tooltip.style.opacity = "0"; });
+      });
+    }
+    function moverTooltip(e) {
+      const x = Math.min(e.clientX + 14, window.innerWidth - 290);
+      const y = Math.max(e.clientY - 18, 8);
+      tooltip.style.left = x + "px";
+      tooltip.style.top = y + "px";
+    }
+
+    function estado(ok, texto) {
+      const el = $("estado");
+      el.classList.toggle("error", !ok);
+      el.querySelector("span:last-child").textContent = texto;
+    }
+
+    function aviso(texto) {
+      const el = $("aviso");
+      el.innerHTML = texto;
+      el.classList.toggle("visible", Boolean(texto));
+    }
+
+    function filtrosActuales() {
+      const p = new URLSearchParams();
+      ["anio", "canton", "categoria"].forEach((k) => { if ($(k).value) p.set(k, $(k).value); });
+      return p.toString();
+    }
+
+    async function cargarFiltros() {
+      const r = await fetch(`${API}/api/filtros`);
+      if (!r.ok) throw new Error("No se pudo cargar /api/filtros");
+      const d = await r.json();
+      d.anios.forEach((anio) => $("anio").add(new Option(String(anio), String(anio))));
+      d.cantones.forEach((c) => $("canton").add(new Option(c, c)));
+      d.categorias.forEach((c) => $("categoria").add(new Option(c, c)));
+    }
+
+    function dibujarLinea(serie) {
+      if (!serie.length) { $("linea").innerHTML = '<p class="vacio">Sin datos para los filtros elegidos.</p>'; return; }
+      const ancho = 900, alto = 320, izq = 56, der = 16, arr = 16, abj = 42;
+      const maximo = Math.max(...serie.map((p) => p.casos), 1);
+      const x = (i) => izq + (serie.length === 1 ? (ancho - izq - der) / 2 : i * (ancho - izq - der) / (serie.length - 1));
+      const y = (v) => alto - abj - (v / maximo) * (alto - arr - abj);
+      const puntos = serie.map((p, i) => `${x(i).toFixed(1)},${y(p.casos).toFixed(1)}`).join(" ");
+      const area = `M ${x(0).toFixed(1)} ${alto - abj} L ${puntos.split(" ").join(" L ")} L ${x(serie.length - 1).toFixed(1)} ${alto - abj} Z`;
+      const paso = Math.max(1, Math.ceil(serie.length / 10));
+      const rejilla = [0, 1, 2, 3, 4].map((i) => {
+        const valor = maximo * i / 4;
+        const yy = y(valor);
+        return `<line class="rejilla" x1="${izq}" y1="${yy}" x2="${ancho - der}" y2="${yy}"/>
+                <text class="eje-texto" x="${izq - 10}" y="${yy + 4}" text-anchor="end">${fmt.format(Math.round(valor))}</text>`;
+      }).join("");
+      const etiquetas = serie.map((p, i) => (i % paso === 0 || i === serie.length - 1)
+        ? `<text class="eje-texto" x="${x(i)}" y="${alto - 16}" text-anchor="middle">${p.etiqueta.replace(" ", " ")}</text>` : "").join("");
+      const circulos = serie.map((p, i) =>
+        `<circle class="punto" cx="${x(i)}" cy="${y(p.casos)}" r="3.2" data-tip="<b>${p.etiqueta}</b><br>${fmt.format(p.casos)} casos"></circle>`).join("");
+
+      $("linea").innerHTML = `<svg viewBox="0 0 ${ancho} ${alto}" role="img" aria-label="Evolución mensual">
+        <defs><linearGradient id="rellenoLinea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#22d3ee" stop-opacity=".32"/><stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+        </linearGradient></defs>
+        ${rejilla}<path d="${area}" fill="url(#rellenoLinea)"/>
+        <polyline class="linea-curva" points="${puntos}"/>${etiquetas}${circulos}
+      </svg>`;
+      enlazarTooltips();
+    }
+
+    function dibujarBarras(items) {
+      if (!items.length) { $("barras-canton").innerHTML = '<p class="vacio">Sin datos.</p>'; return; }
+      const maximo = Math.max(...items.map((d) => d.casos), 1);
+      const total = items.reduce((s, d) => s + d.casos, 0) || 1;
+      $("barras-canton").innerHTML = items.map((d) => `
+        <div class="barra" data-tip="<b>${escapar(d.nombre)}</b><br>${fmt.format(d.casos)} casos · ${(d.casos / total * 100).toFixed(1)}%">
+          <span class="nombre">${escapar(d.nombre)}</span>
+          <span class="pista"><span class="relleno" style="width:${(d.casos / maximo * 100).toFixed(1)}%"></span></span>
+          <span class="numero">${fmt.format(d.casos)}</span>
+        </div>`).join("");
+      enlazarTooltips();
+    }
+
+    function dibujarDonuta(items, total) {
+      if (!items.length) { $("donuta").innerHTML = '<p class="vacio">Sin datos.</p>'; return; }
+      const radio = 70, circ = 2 * Math.PI * radio;
+      let desplazamiento = 0;
+      const segmentos = items.map((d, i) => {
+        const longitud = d.casos / (total || 1) * circ;
+        const svg = `<circle cx="100" cy="100" r="${radio}" fill="none" stroke="${COLORES[i % COLORES.length]}"
+          stroke-width="26" stroke-dasharray="${longitud.toFixed(2)} ${(circ - longitud).toFixed(2)}"
+          stroke-dashoffset="${(-desplazamiento).toFixed(2)}" transform="rotate(-90 100 100)"
+          data-tip="<b>${escapar(d.nombre)}</b><br>${fmt.format(d.casos)} casos · ${(d.casos / (total || 1) * 100).toFixed(1)}%"></circle>`;
+        desplazamiento += longitud;
+        return svg;
+      }).join("");
+      const leyenda = items.map((d, i) => `
+        <div class="leyenda-item" data-tip="<b>${escapar(d.nombre)}</b><br>${fmt.format(d.casos)} casos">
+          <span class="color" style="background:${COLORES[i % COLORES.length]}"></span>
+          <span class="nombre">${escapar(d.nombre)}</span>
+          <span class="valor">${(d.casos / (total || 1) * 100).toFixed(1)}%</span>
+        </div>`).join("");
+      $("donuta").innerHTML = `<svg viewBox="0 0 200 200" role="img" aria-label="Distribución por categoría">
+          <circle cx="100" cy="100" r="${radio}" fill="none" stroke="rgba(143,163,192,.12)" stroke-width="26"/>
+          ${segmentos}
+          <text class="total" x="100" y="98" text-anchor="middle">${fmt.format(total)}</text>
+          <text class="total-label" x="100" y="118" text-anchor="middle">CASOS</text>
+        </svg><div class="leyenda-lista">${leyenda}</div>`;
+      enlazarTooltips();
+    }
+
+    function dibujarMapa(mapa) {
+      if (!mapa.valores.length) { $("mapa").innerHTML = '<p class="vacio">Sin datos.</p>'; return; }
+      const maximo = Math.max(...mapa.valores.map((v) => v.casos), 1);
+      const valorPor = new Map(mapa.valores.map((v) => [`${v.canton}||${v.categoria}`, v.casos]));
+      const cabezera = mapa.categorias.map((c) => `<th>${escapar(CORTO[c] || c)}</th>`).join("");
+      const filas = mapa.cantones.map((canton) => {
+        const celdas = mapa.categorias.map((categoria) => {
+          const valor = valorPor.get(`${canton}||${categoria}`) || 0;
+          const intensidad = valor / maximo;
+          const fondo = intensidad > 0 ? `rgba(34,211,238,${(0.08 + intensidad * 0.82).toFixed(2)})` : "rgba(143,163,192,.06)";
+          const color = intensidad > 0.52 ? "#04121c" : "#d7e2f3";
+          return `<td style="background:${fondo};color:${color}" data-tip="<b>${escapar(canton)}</b><br>${escapar(categoria)}<br>${fmt.format(valor)} casos">${fmt.format(valor)}</td>`;
+        }).join("");
+        return `<tr><th class="canton">${escapar(canton)}</th>${celdas}</tr>`;
+      }).join("");
+      $("mapa").innerHTML = `<table class="mapa"><thead><tr><th class="canton"></th>${cabezera}</tr></thead><tbody>${filas}</tbody></table>`;
+      enlazarTooltips();
+    }
+
+    function dibujarRanking(items) {
+      if (!items.length) { $("ranking").innerHTML = '<p class="vacio">Sin datos.</p>'; return; }
+      const maximo = Math.max(...items.map((d) => d.casos), 1);
+      $("ranking").innerHTML = items.map((d, i) => `
+        <div class="rank" data-tip="<b>${escapar(d.canton)}</b><br>${escapar(d.categoria)}<br>${fmt.format(d.casos)} casos">
+          <span class="num">${i + 1}</span>
+          <span class="texto"><b>${escapar(d.canton)}</b><small>${escapar(d.categoria)}</small>
+            <span class="mini"><i style="width:${(d.casos / maximo * 100).toFixed(1)}%"></i></span></span>
+          <span class="numero">${fmt.format(d.casos)}</span>
+        </div>`).join("");
+      enlazarTooltips();
+    }
+
+    function dibujarKpis(d) {
+      const r = d.resumen;
+      $("k-total").textContent = fmt.format(r.total_casos);
+      $("k-promedio").textContent = fmt.format(r.promedio_mensual);
+      $("k-canton").textContent = r.canton_lider;
+      $("k-canton").style.fontSize = "clamp(18px, 2vw, 26px)";
+      $("k-categoria").textContent = CORTO[r.categoria_lider] || r.categoria_lider;
+      $("k-categoria").style.fontSize = "clamp(18px, 2vw, 26px)";
+
+      if (r.variacion.porcentaje === null) {
+        $("k-total-detalle").innerHTML = `Sin comparación (${escapar(r.variacion.referencia)})`;
+      } else {
+        const pct = r.variacion.porcentaje;
+        $("k-total-detalle").innerHTML = `<span class="chip ${pct >= 0 ? "subida" : "bajada"}">${pct >= 0 ? "▲ +" : "▼ "}${Math.abs(pct)}%</span> vs. ${escapar(r.variacion.referencia)}`;
+      }
+      $("k-promedio-detalle").textContent = `${r.meses} meses con datos registrados`;
+      $("k-canton-detalle").textContent = r.mes_pico ? `Mes pico: ${r.mes_pico.etiqueta} (${fmt.format(r.mes_pico.casos)})` : "";
+      $("k-categoria-detalle").textContent = `${fmt.format(r.registros)} registros en el dataset filtrado`;
+    }
+
+    async function cargar() {
+      aviso("");
+      try {
+        const respuesta = await fetch(`${API}/api/datos?${filtrosActuales()}`);
+        if (!respuesta.ok) throw new Error("Error en la API");
+        const datos = await respuesta.json();
+        estado(true, "API :5000 conectada");
+        dibujarKpis(datos);
+        dibujarLinea(datos.serie_mensual);
+        dibujarBarras(datos.por_canton);
+        dibujarDonuta(datos.por_categoria, datos.resumen.total_casos);
+        dibujarMapa(datos.mapa);
+        dibujarRanking(datos.top_combos);
+
+        const partes = [$("anio").value || "Todos los años", $("canton").value || "Todos los cantones", $("categoria").value || "Todas las categorías"];
+        $("leyenda-linea").textContent = partes.join(" · ");
+      } catch (error) {
+        estado(false, "API :5000 no disponible");
+        aviso(`No se pudo consultar la API en el puerto 5000. Inicia el servidor con <code>.\\.env\\Scripts\\python.exe app.py</code> y vuelve a cargar esta página.`);
+      }
+    }
+
+    ["anio", "canton", "categoria"].forEach((id) => $(id).addEventListener("change", cargar));
+    $("limpiar").addEventListener("click", () => {
+      ["anio", "canton", "categoria"].forEach((id) => { $(id).value = ""; });
+      cargar();
+    });
+    $("exportar").addEventListener("click", () => {
+      const consulta = filtrosActuales();
+      window.location.href = `${API}/api/exportar.csv${consulta ? "?" + consulta : ""}`;
+    });
+
+    (async () => {
+      try { await cargarFiltros(); } catch (error) {
+        aviso(`No se pudieron cargar los filtros. Verifica que el servidor esté activo en el puerto 5000 (<code>.\\.env\\Scripts\\python.exe app.py</code>).`);
+      }
+      await cargar();
+    })();
+  </script>
+</body>
+</html>
